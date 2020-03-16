@@ -26,6 +26,12 @@ class RecipeScraper(object):
         self.req = requests.get(self.url,headers=HEADERS)
         self.soup = BeautifulSoup(self.req.content,'html.parser')
         
+    def get_soup(self):
+        '''
+        return beautifulsoup object. will mostly be used for testing and writing code.
+        '''
+        return self.soup
+    
     def get_url(self):
         '''
         return url
