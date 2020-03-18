@@ -17,13 +17,13 @@ import numpy as np
 
 #%%
 
-class SeriousEatsScraper(RecipeScraper):
+class ChefJulieYoonScraper(RecipeScraper):
     
     def get_host(self):
         '''
         return host site
         '''
-        return 'seriouseats.com'
+        return 'chefjulieyoon.com'
     
     def get_ingredients(self):
         '''
@@ -62,14 +62,15 @@ class SeriousEatsScraper(RecipeScraper):
         '''
         get cook time
         '''
+        # get time from soup
+        cooktime = self.soup.find('time',{'itemprop':'cookTime'}).get_text().split(' ')
         cooktime_dict = {}
-        totaltime_dict = self.get_total_time()
-        preptime_dict = self.get_prep_time()
-        if (totaltime_dict['unit'].lower() == preptime_dict['unit'].lower()) or (totaltime_dict['unit'].lower() == ''.join(list(preptime_dict['unit'].lower())+['s'])):
-            cooktime_dict['value'] = totaltime_dict['value'] - preptime_dict['value']
-            cooktime_dict['unit'] = totaltime_dict['unit']
-        else:
-            raise ValueError('Values of time in different units')
+        # separate into value and the units; need to modify this to allow for something like 1 hour 30 minutes
+        for w in cooktime:
+            if w.isnumeric():
+                cooktime_dict['value'] = float(w)
+            else:
+                cooktime_dict['unit'] = w
         
         return cooktime_dict
     
@@ -78,7 +79,7 @@ class SeriousEatsScraper(RecipeScraper):
         get prep time
         '''
         # get time from soup
-        preptime = self.soup.findAll('span',{'class':'info'})[1].get_text().split(' ')
+        preptime = self.soup.find('time',{'itemprop':'prepTime'}).get_text().split(' ')
         preptime_dict = {}
         # separate into value and the units; need to modify this to allow for something like 1 hour 30 minutes
         for w in preptime:
@@ -94,7 +95,7 @@ class SeriousEatsScraper(RecipeScraper):
         get total time
         '''
         # get time from soup
-        totaltime = self.soup.findAll('span',{'class':'info'})[2].get_text().split(' ')
+        totaltime = self.soup.find('time',{'itemprop':'totalTime'}).get_text().split(' ')
         totaltime_dict = {}
         # separate into value and the units; need to modify this to allow for something like 1 hour 30 minutes
         for w in totaltime:
@@ -110,7 +111,7 @@ class SeriousEatsScraper(RecipeScraper):
         get recipe steps
         '''
         # get steps from soup, excluding the numbers here
-        steps_section = self.soup.findAll('div',{'class':'recipe-procedure-text'})
+        steps_section = self.soup.findAll('li',{'class':'instruction'})
         steps_dict = {}
         for i, steps in enumerate(steps_section):
             # remove next line escapes
@@ -121,15 +122,11 @@ class SeriousEatsScraper(RecipeScraper):
     
     def get_rating(self):
         '''
-        get recipe steps
+        get rating
         '''
-        # get steps from soup, excluding the numbers here
-        rating = self.soup.find('span',{'class':'info rating-value'}).get_text()
         
-        return rating
+        # no rating on this website        
+        return -1
     
 #%%
-se = SeriousEatsScraper('https://www.seriouseats.com/recipes/2020/03/korean-chicken-and-rice-porridge-dak-juk.html')
-se2 = SeriousEatsScraper('https://www.seriouseats.com/recipes/2012/02/rich-and-creamy-tonkotsu-ramen-broth-from-scratch-recipe.html')
-
-            
+cjy = ChefJulieYoonScraper('https://chefjulieyoon.com/2015/07/korean-spicy-kimchi-noodles/')            

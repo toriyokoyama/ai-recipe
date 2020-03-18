@@ -19,6 +19,12 @@ HEADERS = {
 }
 
 #%%
+
+MEASUREMENT_UNITS = ['cup','cups','c','teaspoon','teaspoons','tsp','tablespoon','tablespoons','tbsp',
+                     'ml','grams','g','kilograms','kg','oz','ounce','ounces','lbs','lb','pound','pounds']
+FRACTIONS = ['1/8','1/4','1/3','1/2','2/3','3/4','3/8','5/8','7/8']
+
+#%%
 # define abstract class for general scraper
 class RecipeScraper(object):
     def __init__(self,url):
@@ -37,6 +43,12 @@ class RecipeScraper(object):
         return url
         '''
         return self.url
+    
+    def get_host(self):
+        '''
+        return host
+        '''
+        raise NotImplementedError('This method needs to be implemented')
     
     def get_ingredients(self):
         '''
@@ -68,8 +80,8 @@ class RecipeScraper(object):
         '''
         raise NotImplementedError('This method needs to be implemented')
         
-    def get_reviews(self):
+    def get_rating(self):
         '''
-        parse html for reviews
+        parse html for rating
         '''
         raise NotImplementedError('This method needs to be implemented')
