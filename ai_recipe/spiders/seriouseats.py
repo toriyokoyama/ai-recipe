@@ -96,7 +96,7 @@ class SeriouseatsSpider(scrapy.Spider):
             recipe_data['recipe-level']['cook_time_unit'] = [-1]
             
         # get steps from soup, excluding the numbers here
-        steps_section = response.xpath("//div[@class='recipe-procedure-text']/text()").extract()
+        steps_section = response.xpath("//div[@class='recipe-procedure-text']/p/text()").extract()
         for i, steps in enumerate(steps_section):
             recipe_data['steps']['url'].append(response.url)
             recipe_data['steps']['title'].append(title)
