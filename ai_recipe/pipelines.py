@@ -6,6 +6,7 @@
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
 from scrapy.exporters import CsvItemExporter
+import os
 
 class AiRecipePipeline(object):
     
@@ -18,14 +19,16 @@ class AiRecipePipeline(object):
 
     def process_item(self, item, spider):
         for k, v in item.items():
-            with open('{}.csv'.format(k),'wb') as f:
-                exporter = CsvItemExporter(f)
+            file_exists = os.path.exists('{}.csv'.format(k))
+            with open('{}.csv'.format(k),'ab') as f:
+                exporter = CsvItemExporter(f,include_headers_line=(not file_exists))
                 exporter.start_exporting()
                 exp_dict = {}
                 # get all lists from inner dict
                 for d in zip(*list(v.values())):
+                    headers = list(v.keys())
                     # for the number of columns to export
                     for i in range(len(d)):
-                        exp_dict[i] = d[i]
+                        exp_dict[headers[i]] = d[i]
                     exporter.export_item(exp_dict)
         return item
