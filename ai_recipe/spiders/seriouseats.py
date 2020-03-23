@@ -20,7 +20,8 @@ class SeriouseatsSpider(scrapy.Spider):
 
     custom_settings={ 'FEED_FORMAT': 'csv',
                      'FEED_EXPORTERS': {'csv':'AiRecipePipeline'}}
-    urls_processed = []
+                     #'DEPTH_LIMIT': 1} # if testing, overriding depth_limit helps
+    urls_visited = []
     
     def parse(self, response):
         xp = "//article[@class='c-card c-card--small']/a/@href"
@@ -29,17 +30,22 @@ class SeriouseatsSpider(scrapy.Spider):
         #return (Request(url, callback=self.parse_recipe_site) for url in response.xpath(xp).extract())
         
     def parse_recipe_site(self,response):    
-        self.urls_processed.append(response.url)
         print('Processing URL '+response.url)
+        # check if this url has been visited already to avoid duplicates and to stop perpetual crawl
+        url_visited = response.url in self.urls_visited
+        # add it to the urls visited
+        self.urls_visited.append(response.url)
         
         # only export data for recipes 
-        if ('recipes/' in response.url) and ('.html' in response.url) and (response.url not in self.urls_processed):
+        if ('recipes/' in response.url) and ('.html' in response.url) and (not url_visited):
+            # create dictionary to store data that will be passed to the exporter
             recipe_data = {'ingredients':{'url':[],'title':[],'site':[],'amount':[],'units':[],'ingredient':[]},
                            'steps':{'url':[],'title':[],'site':[],'number':[],'step':[]},
                            'tags':{'url':[],'title':[],'site':[],'tag':[]},
                            'recipe-level':{'url':[],'title':[],'site':[],'cook_time_val':None,'cook_time_unit':None,'prep_time_val':None,'prep_time_unit':None,'total_time_val':None,'total_time_unit':None,'rating':None}}
             
-            title = response.xpath("//h1[@class='title recipe-title c-post__h1']/text()").extract()
+            # extract title of the recipe; two forward slashes gets all text (includes those in format tags)
+            title = response.xpath("//h1[@class='title recipe-title c-post__h1']//text()").extract()
             
             # process ingredients
             ingredients = response.xpath("//li[@class='ingredient']/text()").extract()
@@ -71,18 +77,18 @@ class SeriouseatsSpider(scrapy.Spider):
                 recipe_data['ingredients']['amount'].append(' '.join(amount))
                 recipe_data['ingredients']['units'].append(' '.join(units))
                 recipe_data['ingredients']['ingredient'].append(' '.join(food))
-                
-            # get times
-            times = response.xpath("//span[@class='info']/text()").extract()
-            recipe_data['recipe-level']['url'].append(response.url)
-            recipe_data['recipe-level']['title'].append(title)
-            recipe_data['recipe-level']['site'].append(self.name)
             
             # get average rating
             try:
                 recipe_data['recipe-level']['rating'] = [response.xpath("//span[@class='info rating-value']/text()").extract()[0]]
             except:
                 recipe_data['recipe-level']['rating'] = [-1]
+                
+            # get times
+            times = response.xpath("//span[@class='info']/text()").extract()
+            recipe_data['recipe-level']['url'].append(response.url)
+            recipe_data['recipe-level']['title'].append(title)
+            recipe_data['recipe-level']['site'].append(self.name)
             
             # store prep time
             preptime = times[0].split(' ')
@@ -142,9 +148,9 @@ class SeriouseatsSpider(scrapy.Spider):
             else:
                 #raise ValueError('Values of time in different units')
                 recipe_data['recipe-level']['cook_time_val'] = [-1]
-                recipe_data['recipe-level']['cook_time_unit'] = [-1]
+                recipe_data['recipe-level']['cook_time_unit'] = ['unk']
                 
-            # get steps from soup, excluding the numbers here
+            # get steps, excluding the numbers here (derived)
             steps_section = response.xpath("//div[@class='recipe-procedure-text']/p/text()").extract()
             for i, steps in enumerate(steps_section):
                 recipe_data['steps']['url'].append(response.url)
@@ -164,11 +170,16 @@ class SeriouseatsSpider(scrapy.Spider):
               
             yield recipe_data
         
-        next_urls = response.xpath("//div[@class='block block-related block-thumbnails-medium']/a/@href").extract()
-        next_urls = next_urls + response.xpath("//div[@class='recipe-more__inner expanded']/a/@href").extract()
-        next_urls = next_urls + response.xpath("//div[@class='entry-tags']/ul/li/a/@href").extract()
-        next_urls = next_urls + response.xpath("//div[@class='module__wrapper']/a/@href").extract()
-        
-        for url in next_urls:
-            yield (Request(url, callback=self.parse_recipe_site))
+        # stop crawling further urls if that has already been done for this url
+        if url_visited:
+            return None
+        else:
+            # otherwise, look go deeper into other links on the page
+            next_urls = response.xpath("//div[@class='block block-related block-thumbnails-medium']/a/@href").extract()
+            next_urls = next_urls + response.xpath("//div[@class='recipe-more__inner expanded']/a/@href").extract()
+            next_urls = next_urls + response.xpath("//div[@class='entry-tags']/ul/li/a/@href").extract()
+            next_urls = next_urls + response.xpath("//div[@class='module__wrapper']/a/@href").extract()
+            
+            for url in next_urls:
+                yield (Request(url, callback=self.parse_recipe_site))
         

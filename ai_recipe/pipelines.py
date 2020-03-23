@@ -18,6 +18,7 @@ class AiRecipePipeline(object):
             exporter.finish_exporting()
 
     def process_item(self, item, spider):
+        #print('using ai recipe pipeline')
         for k, v in item.items():
             file_exists = os.path.exists('{}.csv'.format(k))
             with open('{}.csv'.format(k),'ab') as f:
