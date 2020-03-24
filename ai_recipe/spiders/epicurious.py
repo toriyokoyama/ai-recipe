@@ -12,7 +12,7 @@ FRACTIONS = ['1/8','1/4','1/3','1/2','2/3','3/4','3/8','5/8','7/8']
 
 #%%
 
-class SeriouseatsSpider(scrapy.Spider):
+class EpicuriousSpider(scrapy.Spider):
     name = 'epicurious'
     allowed_domains = ['epicurious.com']
     start_urls = ['https://www.epicurious.com/search?content=recipe'] + ['https://www.epicurious.com/search?content=recipe&page=' + str(pg) for pg in range(2,2020)] #looks like there are 2019 total pages of recipes
