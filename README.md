@@ -1,6 +1,6 @@
 # AI Recipe
 
-Starting with some recipe scraping code to gather in data, with the structure mostly taken from <a href='https://github.com/hhursev/recipe-scrapers'>this code</a>. I want to eventually expand off this and start to use the data with NLP and time series methodologies to create interesting use cases with the data. This includes:
+Starting with Scrapy to gather data off recipe websites. I want to eventually expand off this and start to use the data with NLP and time series methodologies to create interesting use cases with the data. This includes:
 
 * Auto-generation of recipes
 * Combinations of ingredients that might go well together
