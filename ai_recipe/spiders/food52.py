@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 from scrapy import Request
+#from scrapy_splash import SplashRequest
 import re
 import numpy as np
 
@@ -43,6 +44,29 @@ class Food52Spider(scrapy.Spider):
         urls.extend(['https://www.' + self.allowed_domains[0] + url for url in response.xpath(xp).extract()])
         
         return (Request(url, callback=self.parse_recipe_site) for url in urls)
+    
+    '''(Request(url, callback=self.parse_recipe_site, meta={
+                            'splash': {
+                                'args': {
+                                    # set rendering arguments here
+                                    'html': 1,
+                                    'png': 1,
+                        
+                                    # 'url' is prefilled from request url
+                                    # 'http_method' is set to 'POST' for POST requests
+                                    # 'body' is set to request body for POST requests
+                                },
+                        
+                                # optional parameters
+                                #'endpoint': 'render.json',  # optional; default is render.json
+                                #'splash_url': '<url>',      # optional; overrides SPLASH_URL
+                                #'slot_policy': scrapy_splash.SlotPolicy.PER_DOMAIN,
+                                #'splash_headers': {},       # optional; a dict with headers sent to Splash
+                                #'dont_process_response': True, # optional, default is False
+                                #'dont_send_headers': True,  # optional, default is False
+                                #'magic_response': False,    # optional, default is True
+                            }
+                        }) for url in urls)'''
        
     def parse_recipe_site(self,response):    
         print('Processing URL '+response.url)
@@ -175,7 +199,7 @@ class Food52Spider(scrapy.Spider):
                 recipe_data['recipe-level']['total_time_unit'] = ['min']
                 
             # get steps, excluding the numbers here (derived)
-            steps_section = response.xpath("//div[@class='recipeDirectionsRoot']//ol/li/text()").extract()
+            steps_section = response.xpath("//div[@id='recipeDirectionsRoot']//span//text()").extract()
             for i, steps in enumerate(steps_section):
                 recipe_data['steps']['url'].append(response.url)
                 recipe_data['steps']['title'].append(title)
@@ -204,4 +228,27 @@ class Food52Spider(scrapy.Spider):
             
             for url in next_urls:
                 yield (Request(url, callback=self.parse_recipe_site))
-        
+
+                '''(Request(url, callback=self.parse_recipe_site, meta={
+                            'splash': {
+                                'args': {
+                                    # set rendering arguments here
+                                    'html': 1,
+                                    'png': 1,
+                        
+                                    # 'url' is prefilled from request url
+                                    # 'http_method' is set to 'POST' for POST requests
+                                    # 'body' is set to request body for POST requests
+                                },
+                        
+                                # optional parameters
+                                #'endpoint': 'render.json',  # optional; default is render.json
+                                #'splash_url': '<url>',      # optional; overrides SPLASH_URL
+                                #'slot_policy': scrapy_splash.SlotPolicy.PER_DOMAIN,
+                                #'splash_headers': {},       # optional; a dict with headers sent to Splash
+                                #'dont_process_response': True, # optional, default is False
+                                #'dont_send_headers': True,  # optional, default is False
+                                #'magic_response': False,    # optional, default is True
+                            }
+                        }))
+        '''
