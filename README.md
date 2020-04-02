@@ -4,6 +4,7 @@ Starting with Scrapy to gather data off recipe websites. I want to eventually ex
 
 * Auto-generation of recipes
 * Combinations of ingredients that might go well together
+* Input home inventory of food (and/or what you are buying at the store) and output suggested recipes with available ingredients
 * Auto-labeling of cuisine, etc.
 * Modification of recipes to be of a different cuisine (kind of like style changing in CNNs)
 * Healthy alternatives to recipes (maybe use recipes labeled as healthy and auto-modify recipes to be more like those)
