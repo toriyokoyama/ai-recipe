@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import scrapy
 from scrapy import Request
-#from scrapy_splash import SplashRequest
 import re
 import numpy as np
 
@@ -16,11 +15,10 @@ FRACTIONS = ['1/8','1/4','1/3','1/2','2/3','3/4','3/8','5/8','7/8','1⁄2','3⁄
 
 #%%
 
-class Food52Spider(scrapy.Spider):
-    name = 'food52'
-    allowed_domains = ['food52.com']
-    start_urls = ['https://food52.com/recipes',
-                  'https://food52.com/recipes/search?tag=test-kitchen-approved&o=relevance'] + ['https://food52.com/recipes/search?o=relevance&page=' + str(pg) +'&tag=test-kitchen-approved' for pg in range(2,210)]
+class GreatBritishBakeoffSpider(scrapy.Spider):
+    name = 'greatbb'
+    allowed_domains = ['thegreatbritishbakeoff.co.uk']
+    start_urls = ['https://thegreatbritishbakeoff.co.uk/recipes/all/page/' + str(pg) +'/' for pg in range(1,32)]
 
     custom_settings={ 'FEED_FORMAT': 'csv',
                      'FEED_EXPORTERS': {'csv':'AiRecipePipeline'}}
@@ -29,47 +27,10 @@ class Food52Spider(scrapy.Spider):
     
     def parse(self, response):
         urls = []
-        xp = "//a[@class='photo photo-block__link']/@href"
-        urls.extend(['https://www.' + self.allowed_domains[0] + url for url in response.xpath(xp).extract()])
-        xp = "//div[@id='ingredient']//a/@href"
-        urls.extend(['https://www.' + self.allowed_domains[0] + url for url in response.xpath(xp).extract()])
-        xp = "//div[@id='meal']//a/@href"
-        urls.extend(['https://www.' + self.allowed_domains[0] + url for url in response.xpath(xp).extract()])
-        xp = "//div[@id='cuisine']//a/@href"
-        urls.extend(['https://www.' + self.allowed_domains[0] + url for url in response.xpath(xp).extract()])
-        xp = "//div[@id='dish-type']//a/@href"
-        urls.extend(['https://www.' + self.allowed_domains[0] + url for url in response.xpath(xp).extract()])
-        xp = "//div[@id='special-consideration']//a/@href"
-        urls.extend(['https://www.' + self.allowed_domains[0] + url for url in response.xpath(xp).extract()])
-        xp = "//div[@id='occasion']//a/@href"
-        urls.extend(['https://www.' + self.allowed_domains[0] + url for url in response.xpath(xp).extract()])
-        xp = "//div[@id='preparation']//a/@href"
-        urls.extend(['https://www.' + self.allowed_domains[0] + url for url in response.xpath(xp).extract()])
-        
+        xp = "//div[@class='recipes-loop_item '/a/@href"
+        urls.extend([url for url in response.xpath(xp).extract()])
+
         return (Request(url, callback=self.parse_recipe_site) for url in urls)
-    
-    '''(Request(url, callback=self.parse_recipe_site, meta={
-                            'splash': {
-                                'args': {
-                                    # set rendering arguments here
-                                    'html': 1,
-                                    'png': 1,
-                        
-                                    # 'url' is prefilled from request url
-                                    # 'http_method' is set to 'POST' for POST requests
-                                    # 'body' is set to request body for POST requests
-                                },
-                        
-                                # optional parameters
-                                #'endpoint': 'render.json',  # optional; default is render.json
-                                #'splash_url': '<url>',      # optional; overrides SPLASH_URL
-                                #'slot_policy': scrapy_splash.SlotPolicy.PER_DOMAIN,
-                                #'splash_headers': {},       # optional; a dict with headers sent to Splash
-                                #'dont_process_response': True, # optional, default is False
-                                #'dont_send_headers': True,  # optional, default is False
-                                #'magic_response': False,    # optional, default is True
-                            }
-                        }) for url in urls)'''
        
     def parse_recipe_site(self,response):    
         print('Processing URL '+response.url)
@@ -78,10 +39,8 @@ class Food52Spider(scrapy.Spider):
         # add it to the urls visited
         self.urls_visited.append(response.url)
         
-        # this appears for recipes, and hopefully not on other types of pages
-        breadcrumbs = response.xpath("//div[@class='breadcrumbs']//text()").extract()
         # only export data for recipes 
-        if ('recipes/' in response.url) and (len(breadcrumbs) > 0) and (not url_visited):
+        if ('recipes/all/' in response.url) and (not url_visited):
             # create dictionary to store data that will be passed to the exporter
             recipe_data = {'ingredients':{'url':[],'title':[],'site':[],'amount':[],'units':[],'ingredient':[],'ingredient-full':[]},
                            'steps':{'url':[],'title':[],'site':[],'number':[],'step':[]},
@@ -89,14 +48,11 @@ class Food52Spider(scrapy.Spider):
                            'recipe-level':{'url':[],'title':[],'site':[],'cook_time_val':None,'cook_time_unit':None,'prep_time_val':None,'prep_time_unit':None,'total_time_val':None,'total_time_unit':None,'rating':None}}
             
             # extract title of the recipe; two forward slashes gets all text (includes those in format tags)
-            title = [response.xpath("//h1[@class='recipe__title']/text()").extract()[0].replace('\n','').replace(';','').strip(' ')]
+            title = [response.xpath("//div[@class='page-banner__title']/h1/text()").extract()[0].replace('\n','').replace(';','').strip(' ')]
             
             # process ingredients
-            ingredients_xp = response.xpath("//div[@class='recipe__list recipe__list--ingredients']/ul/li[not(@class)]")
-            ingredients = [' '.join([w.strip('\n ') for w in xp.xpath("self::node()//text()").extract()]) for xp in ingredients_xp]
+            ingredients = response.xpath("//div[@class='recipe-sidebar__section__content']/p/text()").extract()
             for ingredient in ingredients:
-                # re-combine fractions
-                ingredient = ingredient.replace(' / ','/')
                 recipe_data['ingredients']['ingredient-full'].append(ingredient)
                 # turn ingredient item into a list
                 ingredient_words = ingredient
@@ -151,29 +107,20 @@ class Food52Spider(scrapy.Spider):
                 recipe_data['ingredients']['units'].append(' '.join(units))
                 recipe_data['ingredients']['ingredient'].append(' '.join(food))
             
-            # get average rating
-            #try:
-            #    recipe_data['recipe-level']['rating'] = [response.xpath("//span[@class='rating']/text()").extract()[0].split('/')[0]]
-            #except:
-            #ignoring for now, since I can't figure out the CSS
+            # get average rating, no rating on this site
             recipe_data['recipe-level']['rating'] = [-1]
                 
             # get times
-            headings = response.xpath("//ul[@class='recipe__details']//span/text()").extract()
-            times = [x.replace('\n','').strip(' ') for x in response.xpath("//ul[@class='recipe__details']/li/text()").extract()]
-            times_copy = times.copy()
-            times = []
+            headings = response.xpath("//div[@class='recipe-details__item']//span[@class='label']//text()").extract()
+            times = response.xpath("//div[@class='recipe-details__item']//span[@class='value']//text()").extract()
+
             preptimeidx = -1
             cooktimeidx = -1
-            for t in times_copy:
-                if t != '':
-                    times.append(t)
             for i, h in enumerate(headings):
-                if h.lower() == 'prep time':
+                if h.lower() == 'hands-on time:':
                     preptimeidx = i
-                elif h.lower() == 'cook time':
+                elif h.lower() == 'baking time:':
                     cooktimeidx = i
-            del times_copy
                     
             recipe_data['recipe-level']['url'].append(response.url)
             recipe_data['recipe-level']['title'].append(title)
@@ -246,7 +193,7 @@ class Food52Spider(scrapy.Spider):
                 recipe_data['recipe-level']['total_time_unit'] = ['min']
                 
             # get steps, excluding the numbers here (derived)
-            steps_section = response.xpath("//div[@id='recipeDirectionsRoot']//span//text()").extract()
+            steps_section = response.xpath("//article[@class='recipe-instructions']/p/text()").extract()
             for i, steps in enumerate(steps_section):
                 recipe_data['steps']['url'].append(response.url)
                 recipe_data['steps']['title'].append(title)
@@ -256,7 +203,7 @@ class Food52Spider(scrapy.Spider):
                 recipe_data['steps']['step'].append(steps.replace('\n','').strip(' '))
                 
             # get tags
-            tags_section = response.xpath("//div[@class='recipe__tags']//ul/li/a/text()").extract()
+            tags_section = ['dessert']
             for tag in tags_section:
                 recipe_data['tags']['url'].append(response.url)
                 recipe_data['tags']['title'].append(title)
@@ -265,37 +212,7 @@ class Food52Spider(scrapy.Spider):
               
             yield recipe_data
         
-        # stop crawling further urls if that has already been done for this url
-        if url_visited:
-            return None
-        else:
-            # otherwise, look go deeper into other links on the page
-            next_urls = ['https://www.' + self.allowed_domains[0] + ending for ending in response.xpath("//a[@class='photo photo-block__link']/@href").extract()]
-            next_urls = next_urls + ['https://www.' + self.allowed_domains[0] + ending for ending in response.xpath("//div[@class='recipe__tags']//ul/li/a/@href").extract()]
-            
-            for url in next_urls:
-                yield (Request(url, callback=self.parse_recipe_site))
+        # I think the site is set up simply enough that I don't need to crawl beyond the
+        # recipe page setup
+        return None
 
-                '''(Request(url, callback=self.parse_recipe_site, meta={
-                            'splash': {
-                                'args': {
-                                    # set rendering arguments here
-                                    'html': 1,
-                                    'png': 1,
-                        
-                                    # 'url' is prefilled from request url
-                                    # 'http_method' is set to 'POST' for POST requests
-                                    # 'body' is set to request body for POST requests
-                                },
-                        
-                                # optional parameters
-                                #'endpoint': 'render.json',  # optional; default is render.json
-                                #'splash_url': '<url>',      # optional; overrides SPLASH_URL
-                                #'slot_policy': scrapy_splash.SlotPolicy.PER_DOMAIN,
-                                #'splash_headers': {},       # optional; a dict with headers sent to Splash
-                                #'dont_process_response': True, # optional, default is False
-                                #'dont_send_headers': True,  # optional, default is False
-                                #'magic_response': False,    # optional, default is True
-                            }
-                        }))
-        '''

@@ -7,8 +7,11 @@ import numpy as np
 #%%
 
 MEASUREMENT_UNITS = ['cup','cups','c','teaspoon','teaspoons','tsp','tablespoon','tablespoons','tbsp',
-                     'ml','grams','g','kilograms','kg','oz','ounce','ounces','lbs','lb','pound','pounds']
-FRACTIONS = ['1/8','1/4','1/3','1/2','2/3','3/4','3/8','5/8','7/8']
+                     'ml','grams','g','kilograms','kg','milligrams','mg','oz','ounce','ounces','lbs','lb','pound','pounds',
+                     'small','sm','medium','med','large','lg','quart','qt','liter','litre','l',
+                     'ml','milliliter','millilitre','gallon','gal']
+SPELLED_NUMBERS = ['one','two','three','four','five','six','seven','eight','nine','ten']
+FRACTIONS = ['1/8','1/4','1/3','1/2','2/3','3/4','3/8','5/8','7/8','1⁄2','3⁄4','1⁄3','1⁄4','2⁄3']
 
 #%%
 
@@ -36,7 +39,7 @@ class EpicuriousSpider(scrapy.Spider):
         # only export data for recipes 
         if ('recipes/' in response.url) and ('views/' in response.url) and (not url_visited):
             # create dictionary to store data that will be passed to the exporter
-            recipe_data = {'ingredients':{'url':[],'title':[],'site':[],'amount':[],'units':[],'ingredient':[]},
+            recipe_data = {'ingredients':{'url':[],'title':[],'site':[],'amount':[],'units':[],'ingredient':[],'ingredient-full':[]},
                            'steps':{'url':[],'title':[],'site':[],'number':[],'step':[]},
                            'tags':{'url':[],'title':[],'site':[],'tag':[]},
                            'recipe-level':{'url':[],'title':[],'site':[],'cook_time_val':None,'cook_time_unit':None,'prep_time_val':None,'prep_time_unit':None,'total_time_val':None,'total_time_unit':None,'rating':None}}
@@ -47,6 +50,7 @@ class EpicuriousSpider(scrapy.Spider):
             # process ingredients
             ingredients = response.xpath("//div[@class='ingredients-info']//ol/li/ul/li/text()").extract()
             for ingredient in ingredients:
+                recipe_data['ingredients']['ingredient-full'].append(ingredient)
                 # turn ingredient item into a list
                 ingredient_words = ingredient
                 # get start and end of parentheses
@@ -63,9 +67,34 @@ class EpicuriousSpider(scrapy.Spider):
                     if ingredient_char_incl[i]==1:
                         ingredient_char.append(ingredient_words[i])
                 ingredient_words = ''.join(ingredient_char).split(' ')
-                # remove ones that are in parentheses, strip out punctuation, and make lowercase
+                # strip out punctuation and make lowercase
                 ingredient_words = [ingredient_word.strip('.;,').lower() for ingredient_word in ingredient_words]
-                amount = [w for w in ingredient_words if w.isnumeric() or w in FRACTIONS]
+                # average number-number combos and numberunit combos
+                ingredient_words_copy = ingredient_words.copy()
+                ingredient_words = []
+                for ingredient_word in ingredient_words_copy:
+                    # blank
+                    if ingredient_word == '':
+                        continue
+                     # two numbers separated by a hyphen
+                    elif len(ingredient_word.split('-'))>1:
+                        if all(part.isnumeric() for part in ingredient_word.split('-')):
+                            ingredient_words.append(str((int(ingredient_word.split('-')[0])+int(ingredient_word.split('-')[1]))/2))
+                    elif len(ingredient_word.split('–'))>1:
+                        if all(part.isnumeric() for part in ingredient_word.split('–')):
+                            ingredient_words.append(str((int(ingredient_word.split('–')[0])+int(ingredient_word.split('–')[1]))/2))
+                    # a unit attached to a value
+                    elif (ingredient_word[0].isnumeric()) and any(unit in ingredient_word for unit in MEASUREMENT_UNITS):
+                        num = ''.join([c for c in ingredient_word if c.isnumeric()])
+                        non_num = ''.join([c for c in ingredient_word if c.isnumeric()==False])
+                        ingredient_words.append(num)
+                        ingredient_words.append(non_num.strip('-–'))
+                    else:
+                        ingredient_words.append(ingredient_word)
+                del ingredient_words_copy
+                # create function to convert word numbers to actual numbers
+                conv_spelled_to_num = lambda x: str(SPELLED_NUMBERS.index(x)+1) if x in SPELLED_NUMBERS else x
+                amount = [conv_spelled_to_num(w) for w in ingredient_words if w.isnumeric() or w in FRACTIONS or w in SPELLED_NUMBERS]
                 units = [w for w in ingredient_words if w in MEASUREMENT_UNITS]
                 food = [w for w in ingredient_words if w not in amount and w not in units]
                 recipe_data['ingredients']['url'].append(response.url)
