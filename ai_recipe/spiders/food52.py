@@ -182,7 +182,7 @@ class Food52Spider(scrapy.Spider):
             # store prep time
             # sometimes there are no times available
             if (len(times) != 0) and (preptimeidx >= 0):
-                preptime = times[0].split(' ')
+                preptime = times[preptimeidx].split(' ')
                 pt_val_cnt = 0
                 pt_unit_cnt = 0
                 for w in preptime:
@@ -211,7 +211,7 @@ class Food52Spider(scrapy.Spider):
              # store cook time
              # sometimes there are no times available
             if (len(times) != 0) and (cooktimeidx >= 0):
-                cooktime = times[1].split(' ')
+                cooktime = times[cooktimeidx].split(' ')
                 ct_val_cnt = 0
                 ct_unit_cnt = 0
                 for w in cooktime:

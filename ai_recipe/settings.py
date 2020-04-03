@@ -22,7 +22,7 @@ NEWSPIDER_MODULE = 'ai_recipe.spiders'
 FEED_FORMAT="csv"
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'ai_recipe (+http://www.yourdomain.com)'
+USER_AGENT = 'ai_recipe (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False

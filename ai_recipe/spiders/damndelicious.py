@@ -18,7 +18,7 @@ FRACTIONS = ['1/8','1/4','1/3','1/2','2/3','3/4','3/8','5/8','7/8','1⁄2','3⁄
 class DamnDeliciousSpider(scrapy.Spider):
     name = 'damndelicious'
     allowed_domains = ['damndelicious.net']
-    start_urls = ['https://www.damndelicious.net/recipe-index']
+    start_urls = ['https://damndelicious.net/recipe-index/']
 
     custom_settings={ 'FEED_FORMAT': 'csv',
                      'FEED_EXPORTERS': {'csv':'AiRecipePipeline'}}
@@ -27,7 +27,8 @@ class DamnDeliciousSpider(scrapy.Spider):
     
     def parse(self, response):
         xp = "//div[@class='archive-post']/a/@href"
-        return (Request('https://www.' + self.allowed_domains[0] + url, callback=self.parse_recipe_site) for url in response.xpath(xp).extract())
+        #xp2 = "//a[@class='next page-numbers']/@href"
+        return (Request(url, callback=self.parse_recipe_site) for url in response.xpath(xp).extract())
        
     def parse_recipe_site(self,response):    
         print('Processing URL '+response.url)
@@ -127,7 +128,7 @@ class DamnDeliciousSpider(scrapy.Spider):
             # store prep time
             # sometimes there are no times available
             if (len(times) != 0) and (preptimeidx >= 0):
-                preptime = times[0].split(' ')
+                preptime = times[preptimeidx].split(' ')
                 pt_val_cnt = 0
                 pt_unit_cnt = 0
                 for w in preptime:
@@ -156,7 +157,7 @@ class DamnDeliciousSpider(scrapy.Spider):
              # store cook time
              # sometimes there are no times available
             if (len(times) != 0) and (cooktimeidx >= 0):
-                cooktime = times[1].split(' ')
+                cooktime = times[cooktimeidx].split(' ')
                 ct_val_cnt = 0
                 ct_unit_cnt = 0
                 for w in cooktime:
@@ -226,7 +227,7 @@ class DamnDeliciousSpider(scrapy.Spider):
         else:
             # otherwise, look go deeper into other links on the page
             next_urls = response.xpath("//div[@class='archive-post']/a/@href").extract()
-            next_urls = next_urls + response.xpath("//a[@class='next page-numbers']/a/@href").extract()
+            next_urls = next_urls + response.xpath("//a[@class='next page-numbers']/@href").extract()
             
             for url in next_urls:
                 yield (Request(url, callback=self.parse_recipe_site))

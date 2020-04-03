@@ -27,7 +27,7 @@ class GreatBritishBakeoffSpider(scrapy.Spider):
     
     def parse(self, response):
         urls = []
-        xp = "//div[@class='recipes-loop_item '/a/@href"
+        xp = "//div[@class='recipes-loop__item ']/a/@href"
         urls.extend([url for url in response.xpath(xp).extract()])
 
         return (Request(url, callback=self.parse_recipe_site) for url in urls)
@@ -117,11 +117,11 @@ class GreatBritishBakeoffSpider(scrapy.Spider):
             preptimeidx = -1
             cooktimeidx = -1
             for i, h in enumerate(headings):
-                if h.lower() == 'hands-on time:':
+                if h.lower() == 'hands-on time: ':
                     preptimeidx = i
-                elif h.lower() == 'baking time:':
+                elif h.lower() == 'baking time: ':
                     cooktimeidx = i
-                    
+            
             recipe_data['recipe-level']['url'].append(response.url)
             recipe_data['recipe-level']['title'].append(title)
             recipe_data['recipe-level']['site'].append(self.name)
@@ -129,7 +129,7 @@ class GreatBritishBakeoffSpider(scrapy.Spider):
             # store prep time
             # sometimes there are no times available
             if (len(times) != 0) and (preptimeidx >= 0):
-                preptime = times[0].split(' ')
+                preptime = times[preptimeidx].split(' ')
                 pt_val_cnt = 0
                 pt_unit_cnt = 0
                 for w in preptime:
@@ -158,7 +158,7 @@ class GreatBritishBakeoffSpider(scrapy.Spider):
              # store cook time
              # sometimes there are no times available
             if (len(times) != 0) and (cooktimeidx >= 0):
-                cooktime = times[1].split(' ')
+                cooktime = times[cooktimeidx].split(' ')
                 ct_val_cnt = 0
                 ct_unit_cnt = 0
                 for w in cooktime:
@@ -183,15 +183,15 @@ class GreatBritishBakeoffSpider(scrapy.Spider):
             else:
                 recipe_data['recipe-level']['cook_time_val'] = [-1]
                 recipe_data['recipe-level']['cook_time_unit'] = ['unk']  
-                    
+            
             # derive total time
-            if (recipe_data['recipe-level']['prep_time_unit']== ['unk']) or (recipe_data['recipe-level']['cook_time_unit'] == ['unk']):
+            if (recipe_data['recipe-level']['prep_time_unit'] == ['unk']) or (recipe_data['recipe-level']['cook_time_unit'] == ['unk']):
                 recipe_data['recipe-level']['total_time_val'] = [-1]
                 recipe_data['recipe-level']['total_time_unit'] = ['unk']
             else:
                 recipe_data['recipe-level']['total_time_val'] = [recipe_data['recipe-level']['prep_time_val'][0] + recipe_data['recipe-level']['cook_time_val'][0]]
                 recipe_data['recipe-level']['total_time_unit'] = ['min']
-                
+            
             # get steps, excluding the numbers here (derived)
             steps_section = response.xpath("//article[@class='recipe-instructions']/p/text()").extract()
             for i, steps in enumerate(steps_section):
