@@ -22,7 +22,7 @@ NEWSPIDER_MODULE = 'ai_recipe.spiders'
 FEED_FORMAT="csv"
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = 'ai_recipe (+http://www.yourdomain.com)'
+USER_AGENT = 'ai_recipe (torisbaker@gmail.com)'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
@@ -80,7 +80,7 @@ ITEM_PIPELINES = {
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
-#AUTOTHROTTLE_ENABLED = True
+AUTOTHROTTLE_ENABLED = True
 # The initial download delay
 #AUTOTHROTTLE_START_DELAY = 5
 # The maximum download delay to be set in case of high latencies
@@ -93,7 +93,7 @@ ITEM_PIPELINES = {
 
 # Enable and configure HTTP caching (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html#httpcache-middleware-settings
-#HTTPCACHE_ENABLED = True
+HTTPCACHE_ENABLED = True
 #HTTPCACHE_EXPIRATION_SECS = 0
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
