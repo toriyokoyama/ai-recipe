@@ -1,0 +1,20 @@
+Date: Sat, 04 Apr 2020 01:40:29 GMT
+Content-Type: text/html; charset=UTF-8
+Vary: Accept-Encoding
+X-Gateway-Request-Id: cb27d927a11a6998b693056db86510c1
+X-Gateway-Rate-Limit-Delayed: 0.904
+Link: <https://s23209.pcdn.co>; rel=preconnect
+Link: <https://content.jwplatform.com>; rel=preconnect
+Link: <https://assets-jpcust.jwpsrv.com>; rel=preconnect
+Link: <https://a.tapinfluence.com>; rel=preconnect
+Link: <https://www.shareaholic.net>; rel=preconnect
+Link: <https://damndelicious.net/wp-json/>; rel="https://api.w.org/"
+X-Pingback: https://damndelicious.net/xmlrpc.php
+X-Gateway-Cache-Key: 1585961366.927|standard|https|damndelicious.net||/2013/07/19/caprese-cheese-kabobs-with-balsamic-reduction-and-a/
+X-Gateway-Cache-Status: MISS
+X-Gateway-Skip-Cache: 0
+Cf-Cache-Status: DYNAMIC
+Expect-Ct: max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"
+Server: cloudflare
+Cf-Ray: 57e7524e0da99d8f-ORD
+Content-Encoding: gzip

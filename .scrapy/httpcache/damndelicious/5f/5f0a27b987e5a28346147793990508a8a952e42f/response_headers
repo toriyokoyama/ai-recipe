@@ -1,0 +1,18 @@
+Date: Sat, 04 Apr 2020 01:45:01 GMT
+Content-Type: text/html; charset=UTF-8
+Vary: Accept-Encoding
+X-Gateway-Request-Id: 72851d59f4afb64af965e63578626f7c
+Link: <https://s23209.pcdn.co>; rel=preconnect
+Link: <https://content.jwplatform.com>; rel=preconnect
+Link: <https://assets-jpcust.jwpsrv.com>; rel=preconnect
+Link: <https://a.tapinfluence.com>; rel=preconnect
+Link: <https://www.shareaholic.net>; rel=preconnect
+Link: <https://damndelicious.net/wp-json/>; rel="https://api.w.org/"
+X-Gateway-Cache-Key: 1585961366.927|standard|https|damndelicious.net||/category/asian-inspired/page/5/
+X-Gateway-Cache-Status: HIT
+X-Gateway-Skip-Cache: 0
+Cf-Cache-Status: DYNAMIC
+Expect-Ct: max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"
+Server: cloudflare
+Cf-Ray: 57e758f77b0d9d8f-ORD
+Content-Encoding: gzip

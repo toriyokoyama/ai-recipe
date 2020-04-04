@@ -1,0 +1,19 @@
+Date: Sat, 04 Apr 2020 01:45:05 GMT
+Content-Type: text/html; charset=UTF-8
+Vary: Accept-Encoding
+X-Gateway-Request-Id: 00b8a6c3126afde54ce72f39d129cf03
+X-Gateway-Rate-Limit-Delayed: 0.526
+Link: <https://s23209.pcdn.co>; rel=preconnect
+Link: <https://content.jwplatform.com>; rel=preconnect
+Link: <https://assets-jpcust.jwpsrv.com>; rel=preconnect
+Link: <https://a.tapinfluence.com>; rel=preconnect
+Link: <https://www.shareaholic.net>; rel=preconnect
+Link: <https://damndelicious.net/wp-json/>; rel="https://api.w.org/"
+X-Gateway-Cache-Key: 1585961366.927|standard|https|damndelicious.net||/2016/04/05/southwestern-egg-rolls-with-cilantro-avocado-sauce/
+X-Gateway-Cache-Status: MISS
+X-Gateway-Skip-Cache: 0
+Cf-Cache-Status: DYNAMIC
+Expect-Ct: max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"
+Server: cloudflare
+Cf-Ray: 57e7590d9f769d8f-ORD
+Content-Encoding: gzip

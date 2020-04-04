@@ -1,0 +1,20 @@
+Date: Sat, 04 Apr 2020 01:41:33 GMT
+Content-Type: text/html; charset=UTF-8
+Vary: Accept-Encoding
+X-Gateway-Request-Id: 47772bf940f9e848b604d2695a41f18c
+X-Gateway-Rate-Limit-Conn: 23
+X-Gateway-Rate-Limit-Delayed: 2
+Link: <https://s23209.pcdn.co>; rel=preconnect
+Link: <https://content.jwplatform.com>; rel=preconnect
+Link: <https://assets-jpcust.jwpsrv.com>; rel=preconnect
+Link: <https://a.tapinfluence.com>; rel=preconnect
+Link: <https://www.shareaholic.net>; rel=preconnect
+Link: <https://damndelicious.net/wp-json/>; rel="https://api.w.org/"
+X-Gateway-Cache-Key: 1585961366.927|standard|https|damndelicious.net||/2014/11/14/slow-cooker-garlic-mashed-potatoes/
+X-Gateway-Cache-Status: HIT
+X-Gateway-Skip-Cache: 0
+Cf-Cache-Status: DYNAMIC
+Expect-Ct: max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"
+Server: cloudflare
+Cf-Ray: 57e753e4bcf5e206-ORD
+Content-Encoding: gzip

@@ -1,0 +1,18 @@
+Date: Sat, 04 Apr 2020 01:42:03 GMT
+Content-Type: text/html; charset=UTF-8
+Vary: Accept-Encoding
+X-Gateway-Request-Id: bba691a3c13025ea08d6b5e8508f2a3c
+Link: <https://s23209.pcdn.co>; rel=preconnect
+Link: <https://content.jwplatform.com>; rel=preconnect
+Link: <https://assets-jpcust.jwpsrv.com>; rel=preconnect
+Link: <https://a.tapinfluence.com>; rel=preconnect
+Link: <https://www.shareaholic.net>; rel=preconnect
+Link: <https://damndelicious.net/wp-json/>; rel="https://api.w.org/"
+X-Gateway-Cache-Key: 1585848479.522|standard|https|damndelicious.net||/2018/04/10/instant-pot-beef-stroganoff/
+X-Gateway-Cache-Status: HIT
+X-Gateway-Skip-Cache: 0
+Cf-Cache-Status: DYNAMIC
+Expect-Ct: max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"
+Server: cloudflare
+Cf-Ray: 57e754a24ef55629-ORD
+Content-Encoding: gzip
