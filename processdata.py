@@ -86,6 +86,25 @@ def vectorize(tokens,model,vector_size=VECTOR_SIZE):
         total_vector += model[t]
     return total_vector / len(tokens)
 
+def mean_ingredient_vec(frame):
+    '''
+    get mean of ingredient vectors by recipe to compare recipes
+
+    Parameters
+    ----------
+    frame : dataframe
+        dataframe of recipes that has column with ingredient vectors as arrays
+
+    Returns
+    -------
+    avg : array
+        average ingredient vector
+
+    '''
+    arr = np.concatenate(frame['ingredient-vec'].array).reshape(-1,VECTOR_SIZE)
+    avg = np.mean(arr,axis=0)
+    return avg
+
 ####################################
 # analysis functions for closeness #
 ####################################
@@ -100,23 +119,23 @@ def plot_wordcloud():
     plt.axis('off')
     plt.show()
 
-def get_closest_words(word,labels,word_vecs,topn=5):
+def get_closest(item,labels,vecs,topn=5):
     '''
-    find topn words using cosine similarity
+    find topn items using cosine similarity
     '''
     # get cosine similarity of vectors
-    cs_matrix = cosine_similarity(word_vecs)
+    cs_matrix = cosine_similarity(vecs)
 
-    word_idx = labels.index(word)
+    word_idx = labels.index(item)
     cs_vec = cs_matrix[word_idx,:]
     most_similar_idx = np.argsort(cs_vec)[::-1][:topn]
     
-    return np.array(labels)[most_similar_idx], word_vecs[most_similar_idx]
+    return np.array(labels)[most_similar_idx], vecs[most_similar_idx]
 
-def display_closestwords_tsnescatterplot(word, words, wv, topn=20):
+def display_closest_tsnescatterplot(item, labels, wv, topn=20):
 
-    # get close words
-    close_words, close_vecs = get_closest_words(word, words, wv, topn=topn)
+    # get close items
+    close_items, close_vecs = get_closest(item, labels, wv, topn=topn)
     
     tsne = TSNE(n_components=2)
     Y = tsne.fit_transform(close_vecs)
@@ -126,7 +145,7 @@ def display_closestwords_tsnescatterplot(word, words, wv, topn=20):
     # display scatter plot
     plt.scatter(x_coords, y_coords)
 
-    for label, x, y in zip(close_words, x_coords, y_coords):
+    for label, x, y in zip(close_items, x_coords, y_coords):
         plt.annotate(label, xy=(x, y), xytext=(0, 0), textcoords='offset points')
     plt.xlim(x_coords.min()+0.00005, x_coords.max()+0.00005)
     plt.ylim(y_coords.min()+0.00005, y_coords.max()+0.00005)
@@ -189,18 +208,24 @@ for w, word in enumerate(model.words):
     words.append(word)
     word_vectors[w,:] = model[word]
     
-get_closest_words('sugar',words,word_vectors)
+# get closest ingredient compared to other ingredient vectors
+get_closest('onion',words,word_vectors,topn=20)[0]
 
-display_closestwords_tsnescatterplot('sugar', words, word_vectors)
+display_closest_tsnescatterplot('sugar', words, word_vectors)
 
-#%% 
 
-# tokenize words and get vectors
-
+# tokenize words and get vectors for each ingredient list item
 recipe_ingredients['ingredient-token'] = recipe_ingredients.loc[:,'ingredient-full-mod'].apply(nltk.word_tokenize)
 recipe_ingredients['ingredient-vec'] = recipe_ingredients['ingredient-token'].apply(lambda x: vectorize(x,model))
 
-# TODO
-# get mean of ingredient vectors by recipe to compare recipes
+# aggregate recipe information to get an average vector
+agg_recipe_df = recipe_ingredients[['ID','title','ingredient-vec']].groupby(['ID','title']).apply(mean_ingredient_vec).reset_index()
+agg_recipe_df.columns = ['ID','title','ingredient-vec']
 
-recipe_ingredients[['ID','title','ingredient-vec']].groupby(['ID','title']).sum()
+recipe_labels = list(agg_recipe_df['title'])
+recipe_vecs = np.concatenate(agg_recipe_df['ingredient-vec'].array).reshape(-1,VECTOR_SIZE)
+
+# get closest recipe compared to other recipe vectors
+get_closest(recipe_labels[1000],recipe_labels,recipe_vecs)[0]
+
+display_closest_tsnescatterplot(recipe_labels[1],recipe_labels,recipe_vecs)
