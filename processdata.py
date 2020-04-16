@@ -8,18 +8,10 @@ Created on Fri Apr  3 20:39:43 2020
 
 import uuid
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import nltk
-import wordcloud
-import textblob
-#import sklearn
-#import tensorflow as tf
-#import keras
 import os
 import fasttext
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.manifold import TSNE
+from helpers import *
+import pickle
 
 #%%
 
@@ -29,203 +21,44 @@ VECTOR_SIZE = 100
 
 #%%
 
-####################
-# helper functions #
-####################
+###############################################
+# clean and process data and create embedding #
+###############################################
 
-def cleanup(ingredient):
-    '''
-    Clean up ingredients for tokenization and analysis
-
-    Parameters
-    ----------
-    ingredient : string
-        ingredient item from a recipe
-
-    Returns
-    -------
-    ingredient : string
-        cleaned up string
-
-    '''
-    ingredient = ingredient.replace('\(','')
-    ingredient = ingredient.replace('\)','')
-    ingredient = ingredient.replace('(','')
-    ingredient = ingredient.replace(')','')
-    ingredient = ingredient.replace(';','')
-    ingredient = ingredient.replace('.','')
-    ingredient = ingredient.replace(',','')
-    ingredient = ingredient.replace(':','')
-    ingredient = ingredient.replace('*','')
-    ingredient = ingredient.strip(' ')
-    ingredient = ingredient.replace(u'\xa0',' ')
-    ingredient = ingredient.lower()
-    return ingredient
-
-def vectorize(tokens,model,vector_size=VECTOR_SIZE):
-    '''
-    Vectorize/embed the tokens for an ingredient item
-
-    Parameters
-    ----------
-    tokens : list
-        words making up an ingredient
-    model : fasttext model object
-        fasttext model object for embedding words, trained with recipe data 
-    vector_size : int, optional
-        size of embedding. The default is VECTOR_SIZE.
-
-    Returns
-    -------
-    array
-        average word embedding for all tokens/words in an ingredient item
-
-    '''
-    total_vector = np.zeros((vector_size,))
-    for t in tokens:
-        total_vector += model[t]
-    return total_vector / len(tokens)
-
-def mean_ingredient_vec(frame):
-    '''
-    get mean of ingredient vectors by recipe to compare recipes
-
-    Parameters
-    ----------
-    frame : dataframe
-        dataframe of recipes that has column with ingredient vectors as arrays
-
-    Returns
-    -------
-    avg : array
-        average ingredient vector
-
-    '''
-    arr = np.concatenate(frame['ingredient-vec'].array).reshape(-1,VECTOR_SIZE)
-    avg = np.mean(arr,axis=0)
-    return avg
-
-####################################
-# analysis functions for closeness #
-####################################
-
-def plot_wordcloud():
-    '''
-    create wordcloud for analysis
-    '''
-    wc = wordcloud.WordCloud(relative_scaling=1.0,stopwords=nltk.corpus.stopwords.words('english'))
-    wc.generate(''.join(recipe_ingredients.loc[:,'ingredient-full-mod']))
-    plt.imshow(wc)
-    plt.axis('off')
-    plt.show()
-
-def get_closest(item,labels,vecs,topn=5):
-    '''
-    find topn items using cosine similarity
-    '''
-    # get cosine similarity of vectors
-    cs_matrix = cosine_similarity(vecs)
-
-    word_idx = labels.index(item)
-    cs_vec = cs_matrix[word_idx,:]
-    most_similar_idx = np.argsort(cs_vec)[::-1][:topn]
+if __name__ == '__main__':
+    # import data to df
+    recipe_ingredients = pd.read_csv('/home/toriyokoyama/Projects/AI Recipes/ingredients.csv')
+    recipe_ingredients.dropna(inplace=True,subset=['ingredient-full'])
+    # create unique hash ID
+    recipe_ingredients['ID'] = recipe_ingredients['url'].apply(lambda x: uuid.uuid5(uuid.NAMESPACE_URL,x))
     
-    return np.array(labels)[most_similar_idx], vecs[most_similar_idx]
-
-def display_closest_tsnescatterplot(item, labels, wv, topn=20):
-
-    # get close items
-    close_items, close_vecs = get_closest(item, labels, wv, topn=topn)
+    # add marker to indicate end of sentence for ingredients and make lowercase
+    recipe_ingredients['ingredient-full-mod'] = recipe_ingredients['ingredient-full'].apply(lambda x: cleanup(x) + ' EOS')
     
-    tsne = TSNE(n_components=2)
-    Y = tsne.fit_transform(close_vecs)
-
-    x_coords = Y[:, 0]
-    y_coords = Y[:, 1]
-    # display scatter plot
-    plt.scatter(x_coords, y_coords)
-
-    for label, x, y in zip(close_items, x_coords, y_coords):
-        plt.annotate(label, xy=(x, y), xytext=(0, 0), textcoords='offset points')
-    plt.xlim(x_coords.min()+0.00005, x_coords.max()+0.00005)
-    plt.ylim(y_coords.min()+0.00005, y_coords.max()+0.00005)
-    plt.show()
-
-#%%
-
-##########################
-# clean and process data #
-##########################
-
-# import data to df
-recipe_ingredients = pd.read_csv('/home/toriyokoyama/Projects/AI Recipes/ingredients.csv')
-recipe_ingredients.dropna(inplace=True,subset=['ingredient-full'])
-# create unique hash ID
-recipe_ingredients['ID'] = recipe_ingredients['url'].apply(lambda x: uuid.uuid5(uuid.NAMESPACE_URL,x))
-
-# add marker to indicate end of sentence for ingredients and make lowercase
-recipe_ingredients['ingredient-full-mod'] = recipe_ingredients['ingredient-full'].apply(lambda x: cleanup(x) + ' EOS')
-
-# see if file already exists (and delete if it does)
-try:
-    os.remove('/home/toriyokoyama/Projects/AI Recipes/ingredients.txt')
-except:
-    pass
-
-# create text file that fasttext can use to process
-ID = ''
-with open('/home/toriyokoyama/Projects/AI Recipes/ingredients.txt','w') as f:
-    for ingredient, rid in zip(recipe_ingredients['ingredient-full'],recipe_ingredients['ID']):
-        if ID == '':
-            pass
-        elif ID != rid:
-            f.write('EOS \n')
-        ingredient = cleanup(ingredient)
-        f.write(ingredient + ' ')
-        ID = rid
-
-#%%
-
-# train word vector using recipe data
-model = fasttext.train_unsupervised('/home/toriyokoyama/Projects/AI Recipes/ingredients.txt',
-                                    model='cbow',
-                                    maxn=100)
-
-#%%
-
-#############################
-# visual analysis and tests #
-#############################
-
-# create wordcloud plot
-plot_wordcloud()
-
-# pull word vectors from trained model
-words = []
-word_vectors = np.empty((len(model.words),VECTOR_SIZE))
-
-for w, word in enumerate(model.words):
-    words.append(word)
-    word_vectors[w,:] = model[word]
+    # see if file already exists (and delete if it does)
+    try:
+        os.remove('/home/toriyokoyama/Projects/AI Recipes/ingredients.txt')
+    except:
+        pass
     
-# get closest ingredient compared to other ingredient vectors
-get_closest('onion',words,word_vectors,topn=20)[0]
-
-display_closest_tsnescatterplot('sugar', words, word_vectors)
-
-
-# tokenize words and get vectors for each ingredient list item
-recipe_ingredients['ingredient-token'] = recipe_ingredients.loc[:,'ingredient-full-mod'].apply(nltk.word_tokenize)
-recipe_ingredients['ingredient-vec'] = recipe_ingredients['ingredient-token'].apply(lambda x: vectorize(x,model))
-
-# aggregate recipe information to get an average vector
-agg_recipe_df = recipe_ingredients[['ID','title','ingredient-vec']].groupby(['ID','title']).apply(mean_ingredient_vec).reset_index()
-agg_recipe_df.columns = ['ID','title','ingredient-vec']
-
-recipe_labels = list(agg_recipe_df['title'])
-recipe_vecs = np.concatenate(agg_recipe_df['ingredient-vec'].array).reshape(-1,VECTOR_SIZE)
-
-# get closest recipe compared to other recipe vectors
-get_closest(recipe_labels[1000],recipe_labels,recipe_vecs)[0]
-
-display_closest_tsnescatterplot(recipe_labels[1],recipe_labels,recipe_vecs)
+    # create text file that fasttext can use to process
+    ID = ''
+    with open('/home/toriyokoyama/Projects/AI Recipes/ingredients.txt','w') as f:
+        for ingredient, rid in zip(recipe_ingredients['ingredient-full'],recipe_ingredients['ID']):
+            if ID == '':
+                pass
+            elif ID != rid:
+                f.write('EOS \n')
+            ingredient = cleanup(ingredient)
+            f.write(ingredient + ' ')
+            ID = rid
+    
+    # train word vector using recipe data
+    model = fasttext.train_unsupervised('/home/toriyokoyama/Projects/AI Recipes/ingredients.txt',
+                                        model='cbow',
+                                        maxn=100,
+                                        dim=VECTOR_SIZE)
+    
+    recipe_ingredients.to_pickle('/home/toriyokoyama/Projects/AI Recipes/recipe_ingredients_clean.pickle')
+    model.save_model('/home/toriyokoyama/Projects/AI Recipes/recipe_ingredients_embedding_model.bin')
+    

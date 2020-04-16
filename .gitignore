@@ -1,4 +1,6 @@
 *.csv
 *.zip
 *.txt
+*.bin
+*.pickle
 .scrapy
