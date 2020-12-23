@@ -6,7 +6,10 @@ Created on Wed Apr 15 20:57:56 2020
 @author: toriyokoyama
 """
 
+import os
+os.chdir('/home/toriyokoyama/Projects/ai_recipes/')
 
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import nltk
@@ -14,15 +17,15 @@ import wordcloud
 #import textblob
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.manifold import TSNE
-from helpers import *
+from ingredient_embedding.helpers import *
 import fasttext
 
 #%%
 
 # Import data and model
 
-recipe_ingredients = pd.read_pickle('/home/toriyokoyama/Projects/AI Recipes/recipe_ingredients_clean.pickle')
-model = fasttext.load_model('/home/toriyokoyama/Projects/AI Recipes/recipe_ingredients_embedding_model.bin')
+recipe_ingredients = pd.read_pickle('/home/toriyokoyama/Projects/ai_recipes/ingredient_embedding/recipe_ingredients_clean.pickle')
+model = fasttext.load_model('/home/toriyokoyama/Projects/ai_recipes/ingredient_embedding/recipe_ingredients_embedding_model.bin')
 
 #%%
 
@@ -105,8 +108,8 @@ recipe_ingredients['ingredient-token'] = recipe_ingredients.loc[:,'ingredient-fu
 recipe_ingredients['ingredient-vec'] = recipe_ingredients['ingredient-token'].apply(lambda x: vectorize(x,model,VECTOR_SIZE))
 
 # aggregate recipe information to get an average vector
-agg_recipe_df = recipe_ingredients[['ID','title','ingredient-vec']].groupby(['ID','title']).apply(mean_ingredient_vec,args=(VECTOR_SIZE,)).reset_index()
-agg_recipe_df.columns = ['ID','title','ingredient-vec']
+agg_recipe_df = recipe_ingredients[['ID','title','url','ingredient-vec']].groupby(['ID','title','url']).apply(mean_ingredient_vec,vector_size=VECTOR_SIZE).reset_index()
+agg_recipe_df.columns = ['ID','title','url','ingredient-vec']
 
 recipe_labels = list(agg_recipe_df['title'])
 recipe_vecs = np.concatenate(agg_recipe_df['ingredient-vec'].array).reshape(-1,VECTOR_SIZE)
@@ -115,3 +118,6 @@ recipe_vecs = np.concatenate(agg_recipe_df['ingredient-vec'].array).reshape(-1,V
 get_closest(recipe_labels[1000],recipe_labels,recipe_vecs)[0]
 
 display_closest_tsnescatterplot(recipe_labels[1],recipe_labels,recipe_vecs)
+
+# export recipe vector by ID
+pd.concat((agg_recipe_df[['ID','url']],pd.DataFrame(recipe_vecs,columns=['emb'+str(i) for i in range(0,VECTOR_SIZE)])),axis=1).to_csv('/home/toriyokoyama/Projects/ai_recipes/recipe_ingredients_embedding.csv',index=False)
